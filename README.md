@@ -16,7 +16,6 @@ An Arduino-based automatic dog door that uses a PIR motion sensor to detect appr
 - [Software](#software)
 - [Setup](#setup)
 - [Usage](#usage)
-- [File Structure](#file-structure)
 
 ---
 
