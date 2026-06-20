@@ -1,6 +1,8 @@
 cat > /mnt/user-data/outputs/dog-door/README.md << 'EOF'
 # Automatic Dog Door
 
+This is a project that me and three other engineering students built as our final capstone project for the Project Lead the Way (PLTW) program from November 2024 to May 2025. This project was presented to a board of industry experts who gave a 96% functionality rating on our prototype.
+
 An Arduino-based automatic dog door that uses a PIR motion sensor to detect approach, an RC522 RFID reader to verify an authorized tag on the dog's collar, and a NEMA 17 stepper motor to open and close the door. Access events are logged with real timestamps to a local web server running on a connected PC, with a web UI for monitoring and manual override. The system runs fully standalone when no PC is connected.
 
 ---
@@ -252,20 +254,6 @@ The access log is saved to `dog_door_log.json` in the same directory as `server.
 | ON | OFF | Closed / idle |
 | OFF | ON | Open |
 | Blinking | OFF | Unauthorized tag |
-
----
-
-## File Structure
-
-```
-dog-door/
-├── dog_door.ino        # main Arduino firmware
-├── uid_scan.ino        # one-time utility to read tag UIDs
-├── server.py           # Python serial bridge + HTTP server
-├── index.html          # web UI (served by server.py)
-├── dog_door_log.json   # access log — auto-created on first event
-└── README.md           # this file
-```
 
 ---
 
