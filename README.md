@@ -81,39 +81,9 @@ An Arduino-based automatic dog door that uses a PIR motion sensor to detect appr
 
 ## Mechanism Development
 
-Getting the physical door mechanism right took considerably longer than the electronics. Several approaches were prototyped and discarded before landing on the final design.
-
-### Attempt 1 — Linear actuator
-
-The first prototype used a 12V DC linear actuator to push a flap open via a direct linkage. The actuator had more than enough force and the motion was simple to control with a relay. It was abandoned for two reasons: the actuator's travel speed was fixed and too slow for a dog-sized opening (roughly 8 seconds full stroke), and the mechanical dead-band at the endpoints caused unreliable limit switch triggering, meaning the controller occasionally thought the door was fully open when it was not. Reversing into an already-stopped actuator also caused current spikes that occasionally reset the Arduino.
-
-### Attempt 2 — DC motor with encoder
-
-The second approach used a geared DC motor driving a rack-and-pinion slide to translate the door panel horizontally. Directional control was handled by an L298N H-bridge. Speed was better and the sliding motion was more dog-friendly than a flap. The fundamental problem was positional accuracy: without closed-loop feedback, the motor would drift over repeated cycles as the supply voltage sagged under load. An optical quadrature encoder was added to the output shaft to count pulses and detect position, which solved the drift issue but introduced a new one — the encoder signal lines picked up switching noise from the H-bridge on every PWM cycle, corrupting the count roughly once every 10 to 15 open/close cycles. Extensive bypass capacitor work (100nF ceramic at the encoder VCC pin, ferrite bead on the signal lines) reduced but never eliminated the problem. The H-bridge approach was dropped.
-
-### Attempt 3 — Stepper motor, direct spur gear axle
-
-Switching to a stepper motor removed the need for encoder feedback entirely — step count is inherently positional. The first stepper configuration drove a 3D-printed spur gear directly mounted on the motor shaft, meshing with a gear rack glued to the door panel. This worked well mechanically but the gear mesh introduced significant backlash (approximately 2–3mm of door travel) that accumulated across cycles, causing the door to close slightly out of alignment after 20 to 30 operations. The gear rack adhesive also failed after a week of use.
-
-### Attempt 4 — Stepper motor, lead screw
-
-A 4mm pitch M4 lead screw replaced the gear rack. The motor drove the screw directly via a flexible shaft coupler, and a brass leadscrew nut was fixed to the door panel's drive bracket. Backlash dropped to under 0.5mm and the screw was self-locking, meaning the door held position without the motor being energized. However, the rigid coupling transmitted motor vibration directly into the door frame, producing an audible buzz on each step pulse that was unacceptable. Switching to a flexible coupler reduced this but the screw alignment was then sensitive enough to binding that any slight misalignment between the motor mount and the screw nut caused stalls under load.
-
-### Attempt 5 — Stepper motor, worm gear, and hinged axle (final)
+Getting the physical door mechanism right took considerably longer than the electronics. Several approaches were prototyped and discarded before landing on the final design, including linear actuators, DC motors, and various types of gear trains and axles.
 
 The final design uses a hinged axle system to keep our "door" in place with the frame. In order to move it between the "open" and "shut" states, we used a worm gear-conventional gear train system that has an automatic "lock" built into it, as the worm gear cannot be actuated in the opposite direction. In a commercial product, this system would be far smaller and hidden, but for demonstration purposes, we 3D printed clear-cut, large visual demo components. This is the mechanism that ended up working best and most simply for our design.
-
-### Hinge investigation
-
-Alongside the drive mechanism experiments, several hinge and pivot configurations were tested for a flap-style door before the sliding panel design was settled on:
-
-- **Piano hinge, top-mounted** — adequate but the door sagged over time as the hinge screws pulled out of the lightweight frame material.
-- **Two-point pivot with PTFE bushings** — very smooth but required precise alignment; any frame racking caused the flap to bind.
-- **Spring-return flap with motor assist** — the spring return was tested as a passive fail-open mode (motor opens, spring closes). Abandoned because the spring force varied with temperature and door angle, making step count an unreliable proxy for position.
-
-The sliding panel eliminated hinge concerns entirely and is the approach reflected in the current codebase.
-
----
 
 ## Calibration
 
