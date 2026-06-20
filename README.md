@@ -11,7 +11,7 @@ An Arduino-based automatic dog door that uses a PIR motion sensor to detect appr
 
 - [Hardware](#hardware)
 - [Wiring](#wiring)
-- [Mechanism Development](#mechanism-development)
+- [Chassis](#mechanism-development)
 - [Calibration](#calibration)
 - [Software](#software)
 - [Setup](#setup)
@@ -85,6 +85,12 @@ An Arduino-based automatic dog door that uses a PIR motion sensor to detect appr
 Getting the physical door mechanism right took considerably longer than the electronics. Several approaches were prototyped and discarded before landing on the final design, including linear actuators, DC motors, and various types of gear trains and axles.
 
 The final design uses a hinged axle system to keep our "door" in place with the frame. In order to move it between the "open" and "shut" states, we used a worm gear-conventional gear train system that has an automatic "lock" built into it, as the worm gear cannot be actuated in the opposite direction. In a commercial product, this system would be far smaller and hidden, but for demonstration purposes, we 3D printed clear-cut, large visual demo components. This is the mechanism that ended up working best and most simply for our design.
+
+## Larger Chassis System
+
+To build the base of the door, we used a common waterproof access panel as the foundation and reinforced it with a sturdy wooden frame built out of white oak planks. For the mechanical and internal components, we turned to custom 3D printing to create the worm and convetional gear, while adding a high-strength metal axle to ensure the entire door hinge assembly could withstand structural stress.
+
+Initially, we were looking to integrate electronic cooling fan to manage internal temperatures. However, during testing phases, we discovered that we could optimize the design by replacing the active fan with a more passive system. We 3D printed an electronics housing "box" with ventilation holes printed directly into the surface of the housing, which achieved optimal airflow. For our use cases, the internal electronics remained cool and operational even during prolonged periods of heavy use.
 
 ## Calibration
 
