@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dog door</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #f5f4f0;
+    --surface:   #ffffff;
+    --border:    rgba(0,0,0,0.10);
+    --text:      #1a1a18;
+    --muted:     #6b6b66;
+    --green:     #1D9E75;
+    --green-bg:  #E1F5EE;
+    --red:       #A32D2D;
+    --red-bg:    #FCEBEB;
+    --amber:     #854F0B;
+    --amber-bg:  #FAEEDA;
+    --radius:    10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:       #1c1c1a;
+      --surface:  #272725;
+      --border:   rgba(255,255,255,0.10);
+      --text:     #e8e6df;
+      --muted:    #888780;
+      --green:    #5DCAA5;
+      --green-bg: #04342C;
+      --red:      #F09595;
+      --red-bg:   #501313;
+      --amber:    #FAC775;
+      --amber-bg: #412402;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 32px 16px;
+  }
+
+  .wrap { max-width: 680px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  h1 { font-size: 20px; font-weight: 500; }
+
+  .status-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); transition: background .3s; }
+  .dot.on  { background: var(--green); }
+  .dot.off { background: var(--red); }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+
+  .card-title { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 14px; }
+
+  .override-btn {
+    display: block; width: 100%; padding: 13px;
+    background: var(--green-bg); color: var(--green);
+    border: 1px solid var(--green); border-radius: 8px;
+    font-size: 15px; font-weight: 500; cursor: pointer;
+    transition: opacity .15s;
+  }
+  .override-btn:hover  { opacity: .8; }
+  .override-btn:active { opacity: .6; }
+  .override-btn:disabled { opacity: .4; cursor: default; }
+  .override-btn.sent { background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }
+
+  .log-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    text-align: left; font-weight: 500; color: var(--muted);
+    font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+    padding: 0 10px 10px; border-bottom: 1px solid var(--border);
+  }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { padding: 9px 10px; vertical-align: middle; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-open     { background: var(--green-bg); color: var(--green); }
+  .badge-closed   { background: var(--border);   color: var(--muted); }
+  .badge-denied   { background: var(--red-bg);   color: var(--red); }
+  .badge-override { background: var(--amber-bg); color: var(--amber); }
+
+  .uid { font-family: monospace; font-size: 12px; color: var(--muted); }
+  .empty { text-align: center; color: var(--muted); padding: 32px 0; font-size: 13px; }
+
+  .log-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .clear-btn { font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+  .clear-btn:hover { color: var(--red); border-color: var(--red); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Dog door</h1>
+    <span class="status-dot">
+      <span class="dot" id="dot"></span>
+      <span id="status-label">checking…</span>
+    </span>
+  </header>
+
+  <div class="card">
+    <div class="card-title">Manual override</div>
+    <button class="override-btn" id="override-btn" onclick="sendOverride()">Open door now</button>
+  </div>
+
+  <div class="card">
+    <div class="log-meta">
+      <div class="card-title" style="margin-bottom:0">Access log</div>
+      <button class="clear-btn" onclick="clearView()">Clear view</button>
+    </div>
+    <div class="log-wrap">
+      <table>
+        <thead><tr><th>Time</th><th>Event</th><th>Tag UID</th></tr></thead>
+        <tbody id="log-body">
+          <tr><td colspan="3" class="empty">No entries yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+<script>
+  // persist the clear-view offset across page refreshes via sessionStorage
+  // (sessionStorage clears when the tab is closed, which is the right behaviour —
+  //  a fresh session should show all history)
+  let hiddenCount = parseInt(sessionStorage.getItem('hiddenCount') || '0', 10);
+
+  const BADGE = {
+    opened:   'badge-open',
+    closed:   'badge-closed',
+    denied:   'badge-denied',
+    override: 'badge-override',
+  };
+
+  async function fetchStatus() {
+    try {
+      const d = await fetch('/status').then(r => r.json());
+      const dot = document.getElementById('dot');
+      const lbl = document.getElementById('status-label');
+      dot.className = 'dot ' + (d.arduino ? 'on' : 'off');
+      lbl.textContent = d.arduino ? 'Arduino connected' : 'Arduino not detected';
+    } catch {
+      document.getElementById('dot').className = 'dot off';
+      document.getElementById('status-label').textContent = 'Server unreachable';
+    }
+  }
+
+  async function fetchLog() {
+    try {
+      const entries = await fetch('/log').then(r => r.json());
+
+      // guard against hiddenCount being stale if log was cleared server-side
+      if (hiddenCount > entries.length) {
+        hiddenCount = 0;
+        sessionStorage.setItem('hiddenCount', '0');
+      }
+
+      const visible = entries.slice(hiddenCount);
+      const body = document.getElementById('log-body');
+
+      if (visible.length === 0) {
+        body.innerHTML = '<tr><td colspan="3" class="empty">No entries yet</td></tr>';
+        return;
+      }
+
+      // newest first
+      body.innerHTML = [...visible].reverse().map(e => {
+        const cls = BADGE[e.event] || 'badge-closed';
+        const uid = e.uid
+          ? `<span class="uid">${e.uid}</span>`
+          : `<span class="uid" style="opacity:.35">—</span>`;
+        return `<tr>
+          <td>${e.time}</td>
+          <td><span class="badge ${cls}">${e.event}</span></td>
+          <td>${uid}</td>
+        </tr>`;
+      }).join('');
+    } catch { /* server down — will retry on next interval */ }
+  }
+
+  async function sendOverride() {
+    const btn = document.getElementById('override-btn');
+    btn.disabled = true;
+    btn.classList.add('sent');
+    btn.textContent = 'Sent — opening…';
+    try { await fetch('/override', { method: 'POST' }); } catch { /* best effort */ }
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.classList.remove('sent');
+      btn.textContent = 'Open door now';
+    }, 4000);
+  }
+
+  async function clearView() {
+    try {
+      const entries = await fetch('/log').then(r => r.json());
+      hiddenCount = entries.length;
+      sessionStorage.setItem('hiddenCount', String(hiddenCount));
+      fetchLog();
+    } catch { /* ignore — log fetch will retry */ }
+  }
+
+  fetchStatus();
+  fetchLog();
+  setInterval(fetchStatus, 5000);
+  setInterval(fetchLog,    3000);
+</script>
+</body>
+</html>
