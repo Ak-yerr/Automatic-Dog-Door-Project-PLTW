@@ -227,7 +227,6 @@ The server auto-detects the Arduino port. To specify manually:
 
 ```bash
 python server.py COM3          # Windows
-python server.py /dev/ttyUSB0  # Linux / Mac
 ```
 
 Open `http://localhost:8080` in a browser.
